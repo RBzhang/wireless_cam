@@ -19,6 +19,7 @@ class _ImageDisplay(QtCore.QObject):
         max_w = min(width, 960)
         max_h = min(height, 720)
         self._label.setFixedSize(max_w, max_h)
+        self._label.setScaledContents(True)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self._label)
         self._widget.setLayout(layout)
@@ -42,7 +43,7 @@ class _ImageDisplay(QtCore.QObject):
 
 class image_byte_sink(gr.sync_block):
     def __init__(self, width=64, height=64, output_path='/tmp/received.png',
-                 save_sequence=False, display=False):
+                 save_sequence=False, display=False, skip_each_frame=0):
         gr.sync_block.__init__(
             self,
             name='Image Byte Sink',
@@ -53,11 +54,13 @@ class image_byte_sink(gr.sync_block):
         self.height = height
         self.output_path = output_path
         self.save_sequence = save_sequence
+        self.skip_each_frame = skip_each_frame
 
         self.frame_size = width * height
         self.buffer = np.empty(self.frame_size, dtype=np.uint8)
         self.fill_pos = 0
         self.frame_count = 0
+        self.skip_remaining = skip_each_frame
 
         base, ext = os.path.splitext(output_path)
         self._base = base
@@ -83,6 +86,13 @@ class image_byte_sink(gr.sync_block):
         consumed = 0
 
         while consumed < n_in:
+            if self.skip_remaining > 0:
+                take = min(self.skip_remaining, n_in - consumed)
+                self.skip_remaining -= take
+                consumed += take
+                self._acc_bytes = 0
+                continue
+
             need = self.frame_size - self.fill_pos
             take = min(need, n_in - consumed)
             self.buffer[self.fill_pos:self.fill_pos + take] = in0[consumed:consumed + take]
@@ -98,6 +108,7 @@ class image_byte_sink(gr.sync_block):
                 self._save_frame()
                 self.fill_pos = 0
                 self._acc_bytes = 0
+                self.skip_remaining = self.skip_each_frame
 
         return consumed
 

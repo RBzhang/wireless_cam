@@ -296,12 +296,13 @@ blocks:
     minoutbuf: '0'
     output_path: '"/home/ray/Project/wireless-cam/received.png"'
     save_sequence: 'False'
+    skip_each_frame: '1040'
     width: '1920'
   states:
     _io_cache: ('Image Byte Sink', 'image_byte_sink', [('width', '64'), ('height',
       '64'), ('output_path', "'/tmp/received.png'"), ('save_sequence', 'False'), ('display',
-      'False')], [('0', 'byte', 1)], [], '', ['height', 'output_path', 'save_sequence',
-      'width'])
+      'False'), ('skip_each_frame', '0')], [('0', 'byte', 1)], [], '', ['height',
+      'output_path', 'save_sequence', 'width', 'skip_each_frame'])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -318,7 +319,7 @@ blocks:
     image_path: '"/home/ray/Project/wireless-cam/1920x1080.jpg"'
     maxoutbuf: '0'
     minoutbuf: '0'
-    repeat: 'False'
+    repeat: 'True'
   states:
     _io_cache: ('Image Byte Source', 'image_byte_source', [('image_path', "''"), ('repeat',
       'True')], [], [('0', 'byte', 1)], '', ['repeat'])
