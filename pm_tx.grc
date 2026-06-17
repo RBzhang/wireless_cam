@@ -29,7 +29,19 @@ options:
     state: enabled
 
 blocks:
-- name: gain
+- name: max_phase
+  id: variable
+  parameters:
+    comment: ''
+    value: math.pi/3
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [560, 12.0]
+    rotation: 0
+    state: enabled
+- name: noise
   id: variable_qtgui_range
   parameters:
     comment: ''
@@ -41,25 +53,13 @@ blocks:
     start: '0'
     step: '0.01'
     stop: '1'
-    value: '0.5'
+    value: '0.01'
     widget: counter_slider
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1600, 120.0]
-    rotation: 0
-    state: enabled
-- name: max_phase
-  id: variable
-  parameters:
-    comment: ''
-    value: math.pi/3
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [560, 12.0]
+    coordinate: [744, 24.0]
     rotation: 0
     state: enabled
 - name: samp_rate
@@ -91,179 +91,23 @@ blocks:
     coordinate: [1048, 312.0]
     rotation: 0
     state: enabled
-- name: blocks_complex_to_magphase_0
-  id: blocks_complex_to_magphase
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [328, 884.0]
-    rotation: 0
-    state: enabled
-- name: blocks_float_to_uchar_0
-  id: blocks_float_to_uchar
-  parameters:
-    affinity: ''
-    alias: ''
-    bias: '0'
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    scale: '255'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1568, 908.0]
-    rotation: 0
-    state: enabled
-- name: blocks_magphase_to_complex_0
-  id: blocks_magphase_to_complex
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1400, 372.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_const_vxx_0
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: multiply with max_phase
-    const: max_phase
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1040, 432.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_const_vxx_1
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: divide pi/3
-    const: 3/math.pi
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1240, 920.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_const_vxx_2
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: gain
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [776, 624.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_const_vxx_scale
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: 1.0/255.0
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [864, 432.0]
-    rotation: 0
-    state: enabled
-- name: blocks_null_sink_0
-  id: blocks_null_sink
-  parameters:
-    affinity: ''
-    alias: ''
-    bus_structure_sink: '[[0,],]'
-    comment: ''
-    num_inputs: '1'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [944, 788.0]
-    rotation: 0
-    state: enabled
-- name: blocks_phase_shift_0
-  id: blocks_phase_shift
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    is_radians: 'True'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    shift: math.pi/3
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1128, 628.0]
-    rotation: 0
-    state: enabled
 - name: analog_noise_source_x_0
   id: analog_noise_source_x
   parameters:
     affinity: ''
     alias: ''
+    amp: noise
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
     noise_type: analog.GR_GAUSSIAN
-    output_type: complex
     seed: '0'
     type: complex
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1000, 700.0]
+    coordinate: [1000, 728.0]
     rotation: 0
     state: enabled
 - name: blocks_add_xx_0
@@ -281,7 +125,145 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1200, 628.0]
+    coordinate: [1368, 636.0]
+    rotation: 0
+    state: enabled
+- name: blocks_complex_to_magphase_0
+  id: blocks_complex_to_magphase
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [360, 1036.0]
+    rotation: 0
+    state: enabled
+- name: blocks_float_to_uchar_0
+  id: blocks_float_to_uchar
+  parameters:
+    affinity: ''
+    alias: ''
+    bias: '0'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    scale: '255'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1664, 1116.0]
+    rotation: 0
+    state: enabled
+- name: blocks_magphase_to_complex_0
+  id: blocks_magphase_to_complex
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1576, 356.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_0
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: multiply with max_phase
+    const: max_phase
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1240, 432.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_1
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: divide pi/3
+    const: 3/math.pi
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1336, 1128.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_scale
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    const: 1.0/255.0
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [960, 432.0]
+    rotation: 0
+    state: enabled
+- name: blocks_null_sink_0
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [920, 1028.0]
+    rotation: 0
+    state: enabled
+- name: blocks_phase_shift_0
+  id: blocks_phase_shift
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    is_radians: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    shift: math.pi/3
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1016, 564.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle2_0
@@ -317,7 +299,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [640, 432.0]
+    coordinate: [688, 444.0]
     rotation: 0
     state: enabled
 - name: epy_block_0
@@ -343,7 +325,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1896, 852.0]
+    coordinate: [2008, 1068.0]
     rotation: 0
     state: enabled
 - name: image_byte_source_0
@@ -398,7 +380,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [784, 896.0]
+    coordinate: [856, 1104.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0
@@ -411,7 +393,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1544, 640.0]
+    coordinate: [1568, 624.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_1
@@ -424,7 +406,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1896, 368.0]
+    coordinate: [2072, 352.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -437,7 +419,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [56, 864.0]
+    coordinate: [64, 1032.0]
     rotation: 0
     state: enabled
 - name: virtual_source_1
@@ -450,28 +432,28 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [432, 624.0]
+    coordinate: [328, 560.0]
     rotation: 0
     state: enabled
 
 connections:
 - [analog_const_source_x_0, '0', blocks_magphase_to_complex_0, '0']
+- [analog_noise_source_x_0, '0', blocks_add_xx_0, '1']
+- [blocks_add_xx_0, '0', virtual_sink_0, '0']
 - [blocks_complex_to_magphase_0, '0', blocks_null_sink_0, '0']
 - [blocks_complex_to_magphase_0, '1', pilot_sync_0, '0']
 - [blocks_float_to_uchar_0, '0', epy_block_0, '0']
 - [blocks_magphase_to_complex_0, '0', virtual_sink_1, '0']
 - [blocks_multiply_const_vxx_0, '0', blocks_magphase_to_complex_0, '1']
 - [blocks_multiply_const_vxx_1, '0', blocks_float_to_uchar_0, '0']
-- [blocks_multiply_const_vxx_2, '0', blocks_phase_shift_0, '0']
 - [blocks_multiply_const_vxx_scale, '0', blocks_multiply_const_vxx_0, '0']
-- [blocks_add_xx_0, '0', blocks_complex_to_magphase_0, '0']
 - [blocks_phase_shift_0, '0', blocks_add_xx_0, '0']
-- [analog_noise_source_x_0, '0', blocks_add_xx_0, '1']
 - [blocks_throttle2_0, '0', blocks_uchar_to_float_0, '0']
 - [blocks_uchar_to_float_0, '0', blocks_multiply_const_vxx_scale, '0']
 - [image_byte_source_0, '0', blocks_throttle2_0, '0']
 - [pilot_sync_0, '0', blocks_multiply_const_vxx_1, '0']
-- [virtual_source_1, '0', blocks_multiply_const_vxx_2, '0']
+- [virtual_source_0, '0', blocks_complex_to_magphase_0, '0']
+- [virtual_source_1, '0', blocks_phase_shift_0, '0']
 
 metadata:
   file_format: 1
