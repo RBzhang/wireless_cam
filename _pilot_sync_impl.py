@@ -59,4 +59,18 @@ class pilot_sync(gr.sync_block):
                 corrected = sample - self.phi_est
                 out0[i] = corrected
 
+                self.buf.append(corrected)
+                if len(self.buf) > self.sync_len:
+                    self.buf.pop(0)
+
+                if len(self.buf) == self.sync_len:
+                    diffs = [abs(self.buf[j+1] - self.buf[j])
+                             for j in range(self.sync_len - 1)]
+                    if all(abs(d - self.expected_diff) < self.diff_thresh
+                           for d in diffs):
+                        print(f"[Pilot Sync] Resync detected! "
+                              f"re-estimating φ...", flush=True)
+                        self.state = 'PILOT'
+                        self.buf = []
+
         return n
