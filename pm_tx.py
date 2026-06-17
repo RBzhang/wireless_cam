@@ -77,20 +77,20 @@ class pm_tx(gr.top_block, Qt.QWidget):
         self._gain_range = qtgui.Range(0, 1, 0.01, 0.5, 200)
         self._gain_win = qtgui.RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)
+        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=16, pilot_len=1024, diff_thresh=0.3)
         self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/1920x1080.jpg", repeat=False)
         self.epy_block_0 = epy_block_0.image_byte_sink(width=1920, height=1080, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True)
+        self.blocks_uchar_to_float_0 = blocks.uchar_to_float()
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_char*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_phase_shift_0 = blocks.phase_shift(math.pi/3, True)
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_float*1)
+        self.blocks_multiply_const_vxx_scale = blocks.multiply_const_ff((1.0/255.0))
         self.blocks_multiply_const_vxx_2 = blocks.multiply_const_cc(gain)
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_ff((3/math.pi))
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(max_phase)
-        self.pilot_sync_0 = pilot_sync_0.pilot_sync()
         self.blocks_magphase_to_complex_0 = blocks.magphase_to_complex(1)
         self.blocks_float_to_uchar_0 = blocks.float_to_uchar(1, 255, 0)
         self.blocks_complex_to_magphase_0 = blocks.complex_to_magphase(1)
-        self.blocks_uchar_to_float_0 = blocks.uchar_to_float()
-        self.blocks_multiply_const_vxx_scale = blocks.multiply_const_ff(1.0/255.0)
         self.analog_const_source_x_0 = analog.sig_source_f(0, analog.GR_CONST_WAVE, 0, 0, 1)
 
 
@@ -98,19 +98,19 @@ class pm_tx(gr.top_block, Qt.QWidget):
         # Connections
         ##################################################
         self.connect((self.analog_const_source_x_0, 0), (self.blocks_magphase_to_complex_0, 0))
-        self.connect((self.blocks_uchar_to_float_0, 0), (self.blocks_multiply_const_vxx_scale, 0))
-        self.connect((self.blocks_multiply_const_vxx_scale, 0), (self.blocks_multiply_const_vxx_0, 0))
-        self.connect((self.blocks_complex_to_magphase_0, 1), (self.pilot_sync_0, 0))
-        self.connect((self.pilot_sync_0, 0), (self.blocks_multiply_const_vxx_1, 0))
         self.connect((self.blocks_complex_to_magphase_0, 0), (self.blocks_null_sink_0, 0))
+        self.connect((self.blocks_complex_to_magphase_0, 1), (self.pilot_sync_0, 0))
         self.connect((self.blocks_float_to_uchar_0, 0), (self.epy_block_0, 0))
         self.connect((self.blocks_magphase_to_complex_0, 0), (self.blocks_multiply_const_vxx_2, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_magphase_to_complex_0, 1))
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_float_to_uchar_0, 0))
         self.connect((self.blocks_multiply_const_vxx_2, 0), (self.blocks_phase_shift_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_scale, 0), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.blocks_phase_shift_0, 0), (self.blocks_complex_to_magphase_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.blocks_uchar_to_float_0, 0))
+        self.connect((self.blocks_uchar_to_float_0, 0), (self.blocks_multiply_const_vxx_scale, 0))
         self.connect((self.image_byte_source_0, 0), (self.blocks_throttle2_0, 0))
+        self.connect((self.pilot_sync_0, 0), (self.blocks_multiply_const_vxx_1, 0))
 
 
     def closeEvent(self, event):

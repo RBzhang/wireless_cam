@@ -91,39 +91,6 @@ blocks:
     coordinate: [1048, 312.0]
     rotation: 0
     state: enabled
-- name: blocks_multiply_const_vxx_scale
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: 1.0/255.0
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [864, 432.0]
-    rotation: 0
-    state: enabled
-- name: blocks_uchar_to_float_0
-  id: blocks_uchar_to_float
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [640, 432.0]
-    rotation: 0
-    state: enabled
 - name: blocks_complex_to_magphase_0
   id: blocks_complex_to_magphase
   parameters:
@@ -137,7 +104,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [360, 868.0]
+    coordinate: [328, 884.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_uchar_0
@@ -155,7 +122,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1248, 868.0]
+    coordinate: [1568, 908.0]
     rotation: 0
     state: enabled
 - name: blocks_magphase_to_complex_0
@@ -207,7 +174,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [856, 880.0]
+    coordinate: [1240, 920.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_2
@@ -226,6 +193,24 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [776, 624.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_scale
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    const: 1.0/255.0
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [864, 432.0]
     rotation: 0
     state: enabled
 - name: blocks_null_sink_0
@@ -262,23 +247,6 @@ blocks:
     coordinate: [1128, 628.0]
     rotation: 0
     state: enabled
-- name: pilot_sync_0
-  id: epy_block
-  parameters:
-    _source_code: from _pilot_sync_impl import pilot_sync
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [], [('0', 'float', 1)], [('0', 'float', 1)], '', [])
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [708, 876.0]
-    rotation: 0
-    state: enabled
 - name: blocks_throttle2_0
   id: blocks_throttle2
   parameters:
@@ -298,6 +266,21 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [424, 420.0]
+    rotation: 0
+    state: enabled
+- name: blocks_uchar_to_float_0
+  id: blocks_uchar_to_float
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [640, 432.0]
     rotation: 0
     state: enabled
 - name: epy_block_0
@@ -322,7 +305,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1648, 832.0]
+    coordinate: [1880, 872.0]
     rotation: 0
     state: enabled
 - name: image_byte_source_0
@@ -338,7 +321,7 @@ blocks:
     repeat: 'False'
   states:
     _io_cache: ('Image Byte Source', 'image_byte_source', [('image_path', "''"), ('repeat',
-      'False')], [], [('0', 'byte', 1)], '', ['repeat'])
+      'True')], [], [('0', 'byte', 1)], '', ['repeat'])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -356,6 +339,28 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [416, 16.0]
+    rotation: 0
+    state: enabled
+- name: pilot_sync_0
+  id: epy_block
+  parameters:
+    _source_code: from _pilot_sync_impl import pilot_sync
+    affinity: ''
+    alias: ''
+    comment: ''
+    diff_thresh: '0.3'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    pilot_len: '1024'
+    sync_len: '16'
+  states:
+    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '16'),
+      ('pilot_len', '1024'), ('diff_thresh', '0.3')], [('0', 'float', 1)], [('0',
+      'float', 1)], '', ['diff_thresh', 'pilot_len', 'sync_len'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [784, 896.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0
@@ -413,19 +418,19 @@ blocks:
 
 connections:
 - [analog_const_source_x_0, '0', blocks_magphase_to_complex_0, '0']
-- [blocks_uchar_to_float_0, '0', blocks_multiply_const_vxx_scale, '0']
-- [blocks_multiply_const_vxx_scale, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_complex_to_magphase_0, '0', blocks_null_sink_0, '0']
 - [blocks_complex_to_magphase_0, '1', pilot_sync_0, '0']
-- [pilot_sync_0, '0', blocks_multiply_const_vxx_1, '0']
 - [blocks_float_to_uchar_0, '0', epy_block_0, '0']
 - [blocks_magphase_to_complex_0, '0', virtual_sink_1, '0']
 - [blocks_multiply_const_vxx_0, '0', blocks_magphase_to_complex_0, '1']
 - [blocks_multiply_const_vxx_1, '0', blocks_float_to_uchar_0, '0']
 - [blocks_multiply_const_vxx_2, '0', blocks_phase_shift_0, '0']
+- [blocks_multiply_const_vxx_scale, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_phase_shift_0, '0', virtual_sink_0, '0']
 - [blocks_throttle2_0, '0', blocks_uchar_to_float_0, '0']
+- [blocks_uchar_to_float_0, '0', blocks_multiply_const_vxx_scale, '0']
 - [image_byte_source_0, '0', blocks_throttle2_0, '0']
+- [pilot_sync_0, '0', blocks_multiply_const_vxx_1, '0']
 - [virtual_source_0, '0', blocks_complex_to_magphase_0, '0']
 - [virtual_source_1, '0', blocks_multiply_const_vxx_2, '0']
 

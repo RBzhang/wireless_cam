@@ -11,10 +11,11 @@ GNU Radio 3.10.12.0 project transmitting images over wireless via Phase Modulati
 
 | Block file | Type | What it does |
 |---|---|---|
-| `_image_source_impl.py` | source | Loads image (PIL, grayscale), outputs `np.uint8` bytes |
+| `_image_source_impl.py` | source | Loads image (PIL, grayscale), prepends sync code (16 B alternating `0xFF`/`0x00`) + pilot (1024 B `0x00`), outputs `np.uint8` bytes |
 | `_image_sink_impl.py` | sink | Accumulates bytes, reconstructs grayscale image, saves PNG + optional Qt preview |
+| `_pilot_sync_impl.py` | sync | Detects sync code via alternating phase diff (`π/3`), averages pilot phase → `φ_est`, subtracts from subsequent phase samples |
 
-Thin wrappers (`pm_tx_epy_block_0.py`, `pm_tx_image_byte_source_0.py`) re-export these for GRC embedding.
+Thin wrappers (`pm_tx_epy_block_0.py`, `pm_tx_image_byte_source_0.py`, `pm_tx_pilot_sync_0.py`) re-export these for GRC embedding.
 
 ## Run
 
