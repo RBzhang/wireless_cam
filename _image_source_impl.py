@@ -2,6 +2,9 @@ import numpy as np
 from gnuradio import gr
 from PIL import Image
 
+SYNC_CODE = np.array([0xFF, 0x00] * 8, dtype=np.uint8)  # 16 bytes
+PILOT_LEN = 1024
+
 
 class image_byte_source(gr.sync_block):
     def __init__(self, image_path='', repeat=True):
@@ -23,10 +26,14 @@ class image_byte_source(gr.sync_block):
     def _load_image(self, image_path):
         img = Image.open(image_path).convert('L')
         self.width, self.height = img.size
-        self.data = np.frombuffer(img.tobytes(), dtype=np.uint8)
+        image_data = np.frombuffer(img.tobytes(), dtype=np.uint8)
+        pilot = np.zeros(PILOT_LEN, dtype=np.uint8)
+        self.data = np.concatenate([SYNC_CODE, pilot, image_data])
         self.pos = 0
-        print(f"[Image Byte Source] 已加载: {image_path}, "
-              f"尺寸: {self.width}x{self.height}, 总像素: {len(self.data)}")
+        total = len(self.data)
+        print(f"[Image Byte Source] loaded: {image_path}, "
+              f"size: {self.width}x{self.height}, "
+              f"total bytes: {total}")
 
     def work(self, input_items, output_items):
         out = output_items[0]

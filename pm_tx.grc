@@ -91,21 +91,37 @@ blocks:
     coordinate: [1048, 312.0]
     rotation: 0
     state: enabled
-- name: blocks_char_to_float_0
-  id: blocks_char_to_float
+- name: blocks_multiply_const_vxx_scale
+  id: blocks_multiply_const_vxx
   parameters:
     affinity: ''
     alias: ''
-    comment: scale to [0~1]
+    comment: ''
+    const: 1.0/255.0
     maxoutbuf: '0'
     minoutbuf: '0'
-    scale: '255'
+    type: float
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [752, 432.0]
+    coordinate: [864, 432.0]
+    rotation: 0
+    state: enabled
+- name: blocks_uchar_to_float_0
+  id: blocks_uchar_to_float
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [640, 432.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_magphase_0
@@ -238,12 +254,29 @@ blocks:
     is_radians: 'True'
     maxoutbuf: '0'
     minoutbuf: '0'
-    shift: '0'
+    shift: math.pi/3
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
     coordinate: [1128, 628.0]
+    rotation: 0
+    state: enabled
+- name: pilot_sync_0
+  id: epy_block
+  parameters:
+    _source_code: from _pilot_sync_impl import pilot_sync
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [], [('0', 'float', 1)], [('0', 'float', 1)], '', [])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [708, 876.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle2_0
@@ -302,10 +335,10 @@ blocks:
     image_path: '"/home/ray/Project/wireless-cam/1920x1080.jpg"'
     maxoutbuf: '0'
     minoutbuf: '0'
-    repeat: 'True'
+    repeat: 'False'
   states:
     _io_cache: ('Image Byte Source', 'image_byte_source', [('image_path', "''"), ('repeat',
-      'True')], [], [('0', 'byte', 1)], '', ['repeat'])
+      'False')], [], [('0', 'byte', 1)], '', ['repeat'])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -380,16 +413,18 @@ blocks:
 
 connections:
 - [analog_const_source_x_0, '0', blocks_magphase_to_complex_0, '0']
-- [blocks_char_to_float_0, '0', blocks_multiply_const_vxx_0, '0']
+- [blocks_uchar_to_float_0, '0', blocks_multiply_const_vxx_scale, '0']
+- [blocks_multiply_const_vxx_scale, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_complex_to_magphase_0, '0', blocks_null_sink_0, '0']
-- [blocks_complex_to_magphase_0, '1', blocks_multiply_const_vxx_1, '0']
+- [blocks_complex_to_magphase_0, '1', pilot_sync_0, '0']
+- [pilot_sync_0, '0', blocks_multiply_const_vxx_1, '0']
 - [blocks_float_to_uchar_0, '0', epy_block_0, '0']
 - [blocks_magphase_to_complex_0, '0', virtual_sink_1, '0']
 - [blocks_multiply_const_vxx_0, '0', blocks_magphase_to_complex_0, '1']
 - [blocks_multiply_const_vxx_1, '0', blocks_float_to_uchar_0, '0']
 - [blocks_multiply_const_vxx_2, '0', blocks_phase_shift_0, '0']
 - [blocks_phase_shift_0, '0', virtual_sink_0, '0']
-- [blocks_throttle2_0, '0', blocks_char_to_float_0, '0']
+- [blocks_throttle2_0, '0', blocks_uchar_to_float_0, '0']
 - [image_byte_source_0, '0', blocks_throttle2_0, '0']
 - [virtual_source_0, '0', blocks_complex_to_magphase_0, '0']
 - [virtual_source_1, '0', blocks_multiply_const_vxx_2, '0']
