@@ -247,6 +247,43 @@ blocks:
     coordinate: [1128, 628.0]
     rotation: 0
     state: enabled
+- name: analog_noise_source_x_0
+  id: analog_noise_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_type: analog.GR_GAUSSIAN
+    output_type: complex
+    seed: '0'
+    type: complex
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1000, 700.0]
+    rotation: 0
+    state: enabled
+- name: blocks_add_xx_0
+  id: blocks_add_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1200, 628.0]
+    rotation: 0
+    state: enabled
 - name: blocks_throttle2_0
   id: blocks_throttle2
   parameters:
@@ -302,11 +339,11 @@ blocks:
     _io_cache: ('Image Byte Sink', 'image_byte_sink', [('width', '64'), ('height',
       '64'), ('output_path', "'/tmp/received.png'"), ('save_sequence', 'False'), ('display',
       'False'), ('skip_each_frame', '0')], [('0', 'byte', 1)], [], '', ['height',
-      'output_path', 'save_sequence', 'width', 'skip_each_frame'])
+      'output_path', 'save_sequence', 'skip_each_frame', 'width'])
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1880, 872.0]
+    coordinate: [1896, 852.0]
     rotation: 0
     state: enabled
 - name: image_byte_source_0
@@ -316,7 +353,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    image_path: '"/home/ray/Project/wireless-cam/1920x1080.jpg"'
+    image_path: '"/home/ray/Project/wireless-cam/scene1920x1080.jpg"'
     maxoutbuf: '0'
     minoutbuf: '0'
     repeat: 'True'
@@ -427,12 +464,13 @@ connections:
 - [blocks_multiply_const_vxx_1, '0', blocks_float_to_uchar_0, '0']
 - [blocks_multiply_const_vxx_2, '0', blocks_phase_shift_0, '0']
 - [blocks_multiply_const_vxx_scale, '0', blocks_multiply_const_vxx_0, '0']
-- [blocks_phase_shift_0, '0', virtual_sink_0, '0']
+- [blocks_add_xx_0, '0', blocks_complex_to_magphase_0, '0']
+- [blocks_phase_shift_0, '0', blocks_add_xx_0, '0']
+- [analog_noise_source_x_0, '0', blocks_add_xx_0, '1']
 - [blocks_throttle2_0, '0', blocks_uchar_to_float_0, '0']
 - [blocks_uchar_to_float_0, '0', blocks_multiply_const_vxx_scale, '0']
 - [image_byte_source_0, '0', blocks_throttle2_0, '0']
 - [pilot_sync_0, '0', blocks_multiply_const_vxx_1, '0']
-- [virtual_source_0, '0', blocks_complex_to_magphase_0, '0']
 - [virtual_source_1, '0', blocks_multiply_const_vxx_2, '0']
 
 metadata:
