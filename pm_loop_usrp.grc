@@ -371,7 +371,7 @@ blocks:
     alias: ''
     comment: ''
     display: 'True'
-    height: '40'
+    height: '20'
     maxoutbuf: '0'
     minoutbuf: '0'
     output_path: '"/home/ray/Project/wireless-cam/received.png"'
@@ -429,15 +429,14 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    diff_thresh: '0.3'
     maxoutbuf: '0'
     minoutbuf: '0'
     pilot_len: '1024'
     sync_len: '60'
   states:
     _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '60'),
-      ('pilot_len', '1024'), ('diff_thresh', '0.3')], [('0', 'float', 1)], [('0',
-      'float', 1)], '', ['diff_thresh', 'pilot_len', 'sync_len'])
+      ('pilot_len', '1024')], [('0', 'float', 1)], [('0', 'float', 1)], '', ['pilot_len',
+      'sync_len'])
     bus_sink: false
     bus_source: false
     bus_structure: null
