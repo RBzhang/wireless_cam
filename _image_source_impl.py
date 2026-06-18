@@ -2,7 +2,9 @@ import numpy as np
 from gnuradio import gr
 from PIL import Image
 
-SYNC_CODE = np.array([0xFF, 0x00] * 32, dtype=np.uint8)  # 64 bytes
+BLOCK_N = 20
+SYNC_CODE = np.array([0xFF] * BLOCK_N + [0x00] * BLOCK_N + [0xFF] * BLOCK_N,
+                      dtype=np.uint8)  # 60 bytes: 20 high, 20 low, 20 high
 PILOT_LEN = 1024
 
 

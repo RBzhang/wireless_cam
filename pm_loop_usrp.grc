@@ -11,7 +11,7 @@ options:
     gen_linking: dynamic
     generate_options: qt_gui
     hier_block_src_path: '.:'
-    id: pm_tx
+    id: pm_loop_usrp
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: pm_tx
+    title: pm_loop_usrp
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -45,7 +45,7 @@ blocks:
     start: '0'
     step: '1'
     stop: '30'
-    value: '0'
+    value: '10'
     widget: counter_slider
   states:
     bus_sink: false
@@ -371,13 +371,13 @@ blocks:
     alias: ''
     comment: ''
     display: 'True'
-    height: '1080'
+    height: '40'
     maxoutbuf: '0'
     minoutbuf: '0'
     output_path: '"/home/ray/Project/wireless-cam/received.png"'
     save_sequence: 'False'
-    skip_each_frame: '1088'
-    width: '1920'
+    skip_each_frame: '1084'
+    width: '80'
   states:
     _io_cache: ('Image Byte Sink', 'image_byte_sink', [('width', '64'), ('height',
       '64'), ('output_path', "'/tmp/received.png'"), ('save_sequence', 'False'), ('display',
@@ -396,7 +396,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    image_path: '"/home/ray/Project/wireless-cam/1920x1080.jpg"'
+    image_path: '"/home/ray/Project/wireless-cam/colorbar80*40.png"'
     maxoutbuf: '0'
     minoutbuf: '0'
     repeat: 'True'
@@ -433,11 +433,11 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     pilot_len: '1024'
-    sync_len: '64'
+    sync_len: '60'
   states:
-    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '64'),
-      ('pilot_len', '1024'), ('diff_thresh', '0.3')],
-      [('0', 'float', 1)], [('0', 'float', 1)], '', ['diff_thresh', 'pilot_len', 'sync_len'])
+    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '60'),
+      ('pilot_len', '1024'), ('diff_thresh', '0.3')], [('0', 'float', 1)], [('0',
+      'float', 1)], '', ['diff_thresh', 'pilot_len', 'sync_len'])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -869,7 +869,7 @@ blocks:
     ant7: '"TX/RX"'
     ant8: '"TX/RX"'
     ant9: '"TX/RX"'
-    bw0: 10*samp_rate
+    bw0: 5*samp_rate
     bw1: '0'
     bw10: '0'
     bw11: '0'
@@ -1146,7 +1146,7 @@ blocks:
     ant7: '"RX2"'
     ant8: '"RX2"'
     ant9: '"RX2"'
-    bw0: 10*samp_rate
+    bw0: 5*samp_rate
     bw1: '0'
     bw10: '0'
     bw11: '0'

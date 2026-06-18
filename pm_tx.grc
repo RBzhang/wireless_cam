@@ -319,7 +319,7 @@ blocks:
     minoutbuf: '0'
     output_path: '"/home/ray/Project/wireless-cam/received.png"'
     save_sequence: 'False'
-    skip_each_frame: '1088'
+    skip_each_frame: '1084'
     width: '1920'
   states:
     _io_cache: ('Image Byte Sink', 'image_byte_sink', [('width', '64'), ('height',
@@ -376,9 +376,9 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     pilot_len: '1024'
-    sync_len: '64'
+    sync_len: '60'
   states:
-    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '16'),
+    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '60'),
       ('pilot_len', '1024'), ('diff_thresh', '0.3')], [('0', 'float', 1)], [('0',
       'float', 1)], '', ['diff_thresh', 'pilot_len', 'sync_len'])
     bus_sink: false
