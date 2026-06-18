@@ -1,25 +1,29 @@
 options:
   parameters:
-    alias: ''
     author: ''
     catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
     comment: ''
     copyright: ''
     description: ''
+    gen_cmake: 'On'
     gen_linking: dynamic
     generate_options: qt_gui
-    generator_class_name: PythonQtGuiGenerator
-    generator_module: gnuradio.grc.workflows.python_qt_gui
     hier_block_src_path: '.:'
     id: pm_tx
     max_nouts: '0'
     output_language: python
+    placement: (0,0)
     qt_qss_theme: ''
     realtime_scheduling: ''
     run: 'True'
     run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
     thread_safe_setters: ''
     title: pm_tx
+    window_size: (1000,1000)
   states:
     bus_sink: false
     bus_source: false
@@ -406,7 +410,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2072, 352.0]
+    coordinate: [1896, 368.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0

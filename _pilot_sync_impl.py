@@ -1,9 +1,11 @@
+import os
 import numpy as np
 from gnuradio import gr
 
 
 class pilot_sync(gr.sync_block):
-    def __init__(self, sync_len=16, pilot_len=1024, diff_thresh=0.3):
+    def __init__(self, sync_len=16, pilot_len=1024, diff_thresh=0.3,
+                 log_path='/tmp/pilot_sync_diffs.log'):
         gr.sync_block.__init__(
             self,
             name='Pilot Sync & Phase Correction',
@@ -19,6 +21,12 @@ class pilot_sync(gr.sync_block):
         self.buf = []
         self.pilot_samples = []
         self.phi_est = 0.0
+
+        self._log_file = open(log_path, 'w')
+        self._log_file.write("sample_idx,diffs\n")
+        self._log_file.flush()
+        self._sample_idx = 0
+        self.log_diffs_enabled = False
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
@@ -37,6 +45,9 @@ class pilot_sync(gr.sync_block):
                 if len(self.buf) == self.sync_len:
                     diffs = [abs(self.buf[j+1] - self.buf[j])
                              for j in range(self.sync_len - 1)]
+                    if self.log_diffs_enabled:
+                        self._log_file.write(f"{self._sample_idx},{','.join(f'{d:.6f}' for d in diffs)}\n")
+                        self._log_file.flush()
                     if all(abs(d - self.expected_diff) < self.diff_thresh
                            for d in diffs):
                         print(f"[Pilot Sync] Sync detected! "
@@ -66,6 +77,9 @@ class pilot_sync(gr.sync_block):
                 if len(self.buf) == self.sync_len:
                     diffs = [abs(self.buf[j+1] - self.buf[j])
                              for j in range(self.sync_len - 1)]
+                    if self.log_diffs_enabled:
+                        self._log_file.write(f"{self._sample_idx},{','.join(f'{d:.6f}' for d in diffs)}\n")
+                        self._log_file.flush()
                     if all(abs(d - self.expected_diff) < self.diff_thresh
                            for d in diffs):
                         print(f"[Pilot Sync] Resync detected! "
@@ -73,4 +87,10 @@ class pilot_sync(gr.sync_block):
                         self.state = 'PILOT'
                         self.buf = []
 
+            self._sample_idx += 1
+
         return n
+
+    def stop(self):
+        self._log_file.close()
+        return True

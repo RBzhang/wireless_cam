@@ -42,23 +42,19 @@ class image_byte_source(gr.sync_block):
         if len(self.data) == 0:
             return -1
 
-        remaining = len(self.data) - self.pos
-        if remaining <= 0:
-            if self.repeat:
-                self.pos = 0
-                remaining = len(self.data)
-            else:
+        if self.repeat:
+            repeats = (n + len(self.data) - 1) // len(self.data)
+            tiled = np.tile(self.data, repeats)[:n]
+            out[:] = tiled
+            self.pos = (self.pos + n) % len(self.data)
+        else:
+            remaining = len(self.data) - self.pos
+            if remaining <= 0:
                 return -1
-
-        n_copy = min(n, remaining)
-        out[:n_copy] = self.data[self.pos:self.pos + n_copy]
-        self.pos += n_copy
-
-        if n_copy < n:
-            if self.repeat:
-                out[n_copy:n] = self.data[0:n - n_copy]
-                self.pos = n - n_copy
-            else:
-                return n_copy if n_copy > 0 else -1
+            n_copy = min(n, remaining)
+            out[:n_copy] = self.data[self.pos:self.pos + n_copy]
+            self.pos += n_copy
+            if n_copy < n:
+                return n_copy
 
         return n
