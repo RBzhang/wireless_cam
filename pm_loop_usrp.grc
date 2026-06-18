@@ -371,13 +371,13 @@ blocks:
     alias: ''
     comment: ''
     display: 'True'
-    height: '20'
+    height: '5'
     maxoutbuf: '0'
     minoutbuf: '0'
     output_path: '"/home/ray/Project/wireless-cam/received.png"'
     save_sequence: 'False'
     skip_each_frame: '1084'
-    width: '80'
+    width: '800'
   states:
     _io_cache: ('Image Byte Sink', 'image_byte_sink', [('width', '64'), ('height',
       '64'), ('output_path', "'/tmp/received.png'"), ('save_sequence', 'False'), ('display',
@@ -396,7 +396,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    image_path: '"/home/ray/Project/wireless-cam/colorbar80*40.png"'
+    image_path: '"/home/ray/Project/wireless-cam/800x5.jpg"'
     maxoutbuf: '0'
     minoutbuf: '0'
     repeat: 'True'

@@ -12,12 +12,14 @@ class pilot_sync(gr.sync_block):
         )
         self.sync_len = sync_len
         self.pilot_len = pilot_len
+        self.frame_size = 4000
         self.expected_amp = np.pi / 3
 
         self.state = 'SEARCHING'
         self.buf = []
         self.pilot_samples = []
         self.phi_est = 0.0
+        self._active_count = 0
 
     def _detect_sync(self, buf):
         a = np.unwrap(np.array(buf, dtype=np.float64))
@@ -68,5 +70,12 @@ class pilot_sync(gr.sync_block):
             else:
                 corrected = sample - self.phi_est
                 out0[i] = corrected
+                self._active_count += 1
+                if self.frame_size > 0 and self._active_count >= self.pilot_len + self.frame_size:
+                    print(f"[Pilot Sync] Frame done, "
+                          f"re-searching...", flush=True)
+                    self.state = 'SEARCHING'
+                    self.buf = []
+                    self._active_count = 0
 
         return n
