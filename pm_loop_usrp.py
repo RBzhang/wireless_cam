@@ -73,6 +73,8 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         self.noise = noise = 0.01
         self.max_phase = max_phase = math.pi/3
         self.gain = gain = 10
+        self.frame_width = frame_width = 1920
+        self.frame_height = frame_height = 1080
 
         ##################################################
         # Blocks
@@ -310,12 +312,12 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
-        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=60, pilot_len=1024)
+        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=60, pilot_len=1024, frame_size=frame_width*frame_height)
         self._noise_range = qtgui.Range(0, 1, 0.01, 0.01, 200)
         self._noise_win = qtgui.RangeWidget(self._noise_range, self.set_noise, "'noise'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._noise_win)
-        self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/800x5.jpg", repeat=True)
-        self.epy_block_0 = epy_block_0.image_byte_sink(width=800, height=5, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True, skip_each_frame=1084)
+        self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/1920x1080.jpg", repeat=True)
+        self.epy_block_0 = epy_block_0.image_byte_sink(width=frame_width, height=frame_height, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True, skip_each_frame=1084)
         self.blocks_uchar_to_float_0 = blocks.uchar_to_float()
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_char*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_float*1)
@@ -324,9 +326,9 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(max_phase)
         self.blocks_magphase_to_complex_0 = blocks.magphase_to_complex(1)
         self.blocks_float_to_uchar_0 = blocks.float_to_uchar(1, 255, 0)
-        self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_tx', False)
+        self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_tx.dat', False)
         self.blocks_file_sink_0_0.set_unbuffered(False)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_rx', False)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_rx.dat', False)
         self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_complex_to_magphase_0 = blocks.complex_to_magphase(1)
         self.analog_const_source_x_0 = analog.sig_source_f(0, analog.GR_CONST_WAVE, 0, 0, 1)
@@ -398,6 +400,22 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
     def set_gain(self, gain):
         self.gain = gain
         self.uhd_usrp_source_0.set_gain(self.gain, 0)
+
+    def get_frame_width(self):
+        return self.frame_width
+
+    def set_frame_width(self, frame_width):
+        self.frame_width = frame_width
+        self.epy_block_0.width = self.frame_width
+        self.pilot_sync_0.frame_size = self.frame_width*self.frame_height
+
+    def get_frame_height(self):
+        return self.frame_height
+
+    def set_frame_height(self, frame_height):
+        self.frame_height = frame_height
+        self.epy_block_0.height = self.frame_height
+        self.pilot_sync_0.frame_size = self.frame_width*self.frame_height
 
 
 

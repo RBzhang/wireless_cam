@@ -37,7 +37,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '5'
+    value: '1080'
   states:
     bus_sink: false
     bus_source: false
@@ -49,7 +49,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '800'
+    value: '1920'
   states:
     bus_sink: false
     bus_source: false
@@ -200,7 +200,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: /home/ray/Project/wireless-cam/phase_rx
+    file: /home/ray/Project/wireless-cam/phase_rx.dat
     type: float
     unbuffered: 'False'
     vlen: '1'
@@ -218,7 +218,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: /home/ray/Project/wireless-cam/phase_tx
+    file: /home/ray/Project/wireless-cam/phase_tx.dat
     type: float
     unbuffered: 'False'
     vlen: '1'
@@ -420,7 +420,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    image_path: '"/home/ray/Project/wireless-cam/800x5.jpg"'
+    image_path: '"/home/ray/Project/wireless-cam/1920x1080.jpg"'
     maxoutbuf: '0'
     minoutbuf: '0'
     repeat: 'True'
@@ -453,15 +453,15 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    frame_size: '4000'
+    frame_size: frame_width*frame_height
     maxoutbuf: '0'
     minoutbuf: '0'
     pilot_len: '1024'
     sync_len: '60'
   states:
     _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '60'),
-      ('pilot_len', '1024'), ('frame_size', '4000')], [('0', 'float', 1)], [('0', 'float', 1)], '', ['pilot_len',
-      'sync_len', 'frame_size'])
+      ('pilot_len', '1024'), ('frame_size', '4000')], [('0', 'float', 1)], [('0',
+      'float', 1)], '', ['frame_size', 'pilot_len', 'sync_len'])
     bus_sink: false
     bus_source: false
     bus_structure: null
