@@ -1,11 +1,10 @@
-import os
 import numpy as np
 from gnuradio import gr
 
 
 class pilot_sync(gr.sync_block):
-    def __init__(self, sync_len=16, pilot_len=1024, diff_thresh=0.3,
-                 log_path='/tmp/pilot_sync_diffs.log'):
+    def __init__(self, sync_len=64, pilot_len=1024, diff_thresh=0.3,
+                 min_matching_diffs=30):
         gr.sync_block.__init__(
             self,
             name='Pilot Sync & Phase Correction',
@@ -15,6 +14,7 @@ class pilot_sync(gr.sync_block):
         self.sync_len = sync_len
         self.pilot_len = pilot_len
         self.diff_thresh = diff_thresh
+        self.min_matching_diffs = min_matching_diffs
         self.expected_diff = np.pi / 3
 
         self.state = 'SEARCHING'
@@ -22,11 +22,14 @@ class pilot_sync(gr.sync_block):
         self.pilot_samples = []
         self.phi_est = 0.0
 
-        self._log_file = open(log_path, 'w')
-        self._log_file.write("sample_idx,diffs\n")
-        self._log_file.flush()
-        self._sample_idx = 0
-        self.log_diffs_enabled = False
+    def _sync_match(self, buf):
+        n_diffs = len(buf) - 1
+        count = 0
+        for j in range(n_diffs):
+            d = abs(buf[j+1] - buf[j])
+            if abs(d - self.expected_diff) < self.diff_thresh:
+                count += 1
+        return count >= self.min_matching_diffs
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
@@ -43,15 +46,8 @@ class pilot_sync(gr.sync_block):
                     self.buf.pop(0)
 
                 if len(self.buf) == self.sync_len:
-                    diffs = [abs(self.buf[j+1] - self.buf[j])
-                             for j in range(self.sync_len - 1)]
-                    if self.log_diffs_enabled:
-                        self._log_file.write(f"{self._sample_idx},{','.join(f'{d:.6f}' for d in diffs)}\n")
-                        self._log_file.flush()
-                    if all(abs(d - self.expected_diff) < self.diff_thresh
-                           for d in diffs):
-                        print(f"[Pilot Sync] Sync detected! "
-                              f"first={self.buf[0]:.4f} last={self.buf[-1]:.4f}",
+                    if self._sync_match(self.buf):
+                        print(f"[Pilot Sync] Sync detected!",
                               flush=True)
                         self.state = 'PILOT'
                         self.buf = []
@@ -75,22 +71,10 @@ class pilot_sync(gr.sync_block):
                     self.buf.pop(0)
 
                 if len(self.buf) == self.sync_len:
-                    diffs = [abs(self.buf[j+1] - self.buf[j])
-                             for j in range(self.sync_len - 1)]
-                    if self.log_diffs_enabled:
-                        self._log_file.write(f"{self._sample_idx},{','.join(f'{d:.6f}' for d in diffs)}\n")
-                        self._log_file.flush()
-                    if all(abs(d - self.expected_diff) < self.diff_thresh
-                           for d in diffs):
-                        print(f"[Pilot Sync] Resync detected! "
-                              f"re-estimating φ...", flush=True)
+                    if self._sync_match(self.buf):
+                        print(f"[Pilot Sync] Resync detected!",
+                              flush=True)
                         self.state = 'PILOT'
                         self.buf = []
 
-            self._sample_idx += 1
-
         return n
-
-    def stop(self):
-        self._log_file.close()
-        return True
