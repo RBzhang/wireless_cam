@@ -71,7 +71,7 @@ class pilot_sync(gr.sync_block):
                 corrected = sample - self.phi_est
                 out0[i] = corrected
                 self._active_count += 1
-                if self.frame_size > 0 and self._active_count >= self.pilot_len + self.frame_size:
+                if self.frame_size > 0 and self._active_count >= self.frame_size:
                     print(f"[Pilot Sync] Frame done, "
                           f"re-searching...", flush=True)
                     self.state = 'SEARCHING'

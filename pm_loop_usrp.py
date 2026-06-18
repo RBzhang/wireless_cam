@@ -69,7 +69,7 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 1e6
+        self.samp_rate = samp_rate = 0.5e6
         self.noise = noise = 0.01
         self.max_phase = max_phase = math.pi/3
         self.gain = gain = 10
