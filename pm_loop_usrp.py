@@ -312,14 +312,13 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
-        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=60, pilot_len=1024, frame_size=frame_width*frame_height)
+        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=416, pilot_len=1024, frame_size=frame_width*frame_height)
         self._noise_range = qtgui.Range(0, 1, 0.01, 0.01, 200)
         self._noise_win = qtgui.RangeWidget(self._noise_range, self.set_noise, "'noise'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._noise_win)
-        self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/1920x1080.jpg", repeat=True)
-        self.epy_block_0 = epy_block_0.image_byte_sink(width=frame_width, height=frame_height, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True, skip_each_frame=1084)
+        self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/scene1920x1080.jpg", repeat=True)
+        self.epy_block_0 = epy_block_0.image_byte_sink(width=frame_width, height=frame_height, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True, skip_each_frame=0)
         self.blocks_uchar_to_float_0 = blocks.uchar_to_float()
-        self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_char*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_multiply_const_vxx_scale = blocks.multiply_const_ff((1.0/255.0))
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_ff((3/math.pi))
@@ -331,6 +330,7 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_rx.dat', False)
         self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_complex_to_magphase_0 = blocks.complex_to_magphase(1)
+        self.analog_rail_ff_0 = analog.rail_ff(0, 1)
         self.analog_const_source_x_0 = analog.sig_source_f(0, analog.GR_CONST_WAVE, 0, 0, 1)
 
 
@@ -338,6 +338,7 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         # Connections
         ##################################################
         self.connect((self.analog_const_source_x_0, 0), (self.blocks_magphase_to_complex_0, 0))
+        self.connect((self.analog_rail_ff_0, 0), (self.blocks_float_to_uchar_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 1), (self.blocks_file_sink_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 0), (self.blocks_null_sink_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 1), (self.pilot_sync_0, 0))
@@ -348,11 +349,10 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_file_sink_0_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_magphase_to_complex_0, 1))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.qtgui_time_sink_x_1_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_float_to_uchar_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_1, 0), (self.analog_rail_ff_0, 0))
         self.connect((self.blocks_multiply_const_vxx_scale, 0), (self.blocks_multiply_const_vxx_0, 0))
-        self.connect((self.blocks_throttle2_0, 0), (self.blocks_uchar_to_float_0, 0))
         self.connect((self.blocks_uchar_to_float_0, 0), (self.blocks_multiply_const_vxx_scale, 0))
-        self.connect((self.image_byte_source_0, 0), (self.blocks_throttle2_0, 0))
+        self.connect((self.image_byte_source_0, 0), (self.blocks_uchar_to_float_0, 0))
         self.connect((self.pilot_sync_0, 0), (self.blocks_multiply_const_vxx_1, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_complex_to_magphase_0, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.qtgui_time_sink_x_1_1, 0))
@@ -371,7 +371,6 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_1_0.set_samp_rate(self.samp_rate)

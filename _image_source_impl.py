@@ -2,9 +2,14 @@ import numpy as np
 from gnuradio import gr
 from PIL import Image
 
-BLOCK_N = 20
-SYNC_CODE = np.array([0xFF] * BLOCK_N + [0x00] * BLOCK_N + [0xFF] * BLOCK_N,
-                      dtype=np.uint8)  # 60 bytes: 20 high, 20 low, 20 high
+BARKER_13 = np.array(
+    [1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1],
+    dtype=np.int8
+)
+SYNC_CHIP_SAMPLES = 32
+SYNC_CODE = np.where(
+    np.repeat(BARKER_13, SYNC_CHIP_SAMPLES) > 0, 0xFF, 0x00
+).astype(np.uint8)
 PILOT_LEN = 1024
 
 
@@ -45,9 +50,8 @@ class image_byte_source(gr.sync_block):
             return -1
 
         if self.repeat:
-            repeats = (n + len(self.data) - 1) // len(self.data)
-            tiled = np.tile(self.data, repeats)[:n]
-            out[:] = tiled
+            idx = (self.pos + np.arange(n)) % len(self.data)
+            out[:] = self.data[idx]
             self.pos = (self.pos + n) % len(self.data)
         else:
             remaining = len(self.data) - self.pos
