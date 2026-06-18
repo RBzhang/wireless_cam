@@ -33,6 +33,30 @@ options:
     state: enabled
 
 blocks:
+- name: frame_height
+  id: variable
+  parameters:
+    comment: ''
+    value: '5'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [456, 152.0]
+    rotation: 0
+    state: enabled
+- name: frame_width
+  id: variable
+  parameters:
+    comment: ''
+    value: '800'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [360, 152.0]
+    rotation: 0
+    state: enabled
 - name: gain
   id: variable_qtgui_range
   parameters:
@@ -371,13 +395,13 @@ blocks:
     alias: ''
     comment: ''
     display: 'True'
-    height: '5'
+    height: frame_height
     maxoutbuf: '0'
     minoutbuf: '0'
     output_path: '"/home/ray/Project/wireless-cam/received.png"'
     save_sequence: 'False'
     skip_each_frame: '1084'
-    width: '800'
+    width: frame_width
   states:
     _io_cache: ('Image Byte Sink', 'image_byte_sink', [('width', '64'), ('height',
       '64'), ('output_path', "'/tmp/received.png'"), ('save_sequence', 'False'), ('display',
@@ -429,14 +453,15 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
+    frame_size: '4000'
     maxoutbuf: '0'
     minoutbuf: '0'
     pilot_len: '1024'
     sync_len: '60'
   states:
     _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '60'),
-      ('pilot_len', '1024')], [('0', 'float', 1)], [('0', 'float', 1)], '', ['pilot_len',
-      'sync_len'])
+      ('pilot_len', '1024'), ('frame_size', '4000')], [('0', 'float', 1)], [('0', 'float', 1)], '', ['pilot_len',
+      'sync_len', 'frame_size'])
     bus_sink: false
     bus_source: false
     bus_structure: null

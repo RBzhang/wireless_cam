@@ -77,7 +77,7 @@ class pm_tx(gr.top_block, Qt.QWidget):
         self._noise_range = qtgui.Range(0, 1, 0.01, 0.01, 200)
         self._noise_win = qtgui.RangeWidget(self._noise_range, self.set_noise, "'noise'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._noise_win)
-        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=60, pilot_len=1024)
+        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=60, pilot_len=1024, frame_size=4000)
         self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/scene1920x1080.jpg", repeat=True)
         self.epy_block_0 = epy_block_0.image_byte_sink(width=1920, height=1080, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True, skip_each_frame=1084)
         self.blocks_uchar_to_float_0 = blocks.uchar_to_float()

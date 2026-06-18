@@ -3,7 +3,7 @@ from gnuradio import gr
 
 
 class pilot_sync(gr.sync_block):
-    def __init__(self, sync_len=60, pilot_len=1024):
+    def __init__(self, sync_len=60, pilot_len=1024, frame_size=4000):
         gr.sync_block.__init__(
             self,
             name='Pilot Sync & Phase Correction',
@@ -12,7 +12,7 @@ class pilot_sync(gr.sync_block):
         )
         self.sync_len = sync_len
         self.pilot_len = pilot_len
-        self.frame_size = 4000
+        self.frame_size = frame_size
         self.expected_amp = np.pi / 3
 
         self.state = 'SEARCHING'
