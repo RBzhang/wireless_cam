@@ -1,36 +1,111 @@
 # wireless-cam
 
-GNU Radio 3.10.12.0 project transmitting images over wireless via Phase Modulation (PM).
+GNU Radio 3.10.12.0 project for transmitting grayscale images over a
+wireless PM link using USRP hardware.
 
-## Flow graphs
+## Primary flow graph
 
-- **`pm_tx.grc`** — GNU Radio Companion source. Edit this in GRC, then regenerate `pm_tx.py`.
-- **`pm_tx.py`** — PM transmitter + receiver. Reads `1920x1080.jpg`, modulates phase, demodulates, saves `received.png`. Launches a Qt GUI with a gain slider and live received-image preview.
+- **`pm_loop_usrp.grc`** - GNU Radio Companion source. Make persistent
+  flow-graph changes here, then regenerate `pm_loop_usrp.py`.
+- **`pm_loop_usrp.py`** - Generated Qt application containing the PM
+  transmitter and receiver. The current image source is
+  `scene1920x1080.jpg`; received frames are saved to `received.png`.
+- **`pm_tx.grc` / `pm_tx.py`** - Older PM flow graph. Do not assume changes
+  made here affect `pm_loop_usrp`.
+- **`b210test.grc` / `b210test.py`** - Separate USRP B210 test flow graph.
+
+Run the primary application with:
+
+```bash
+python3 pm_loop_usrp.py
+```
 
 ## Custom blocks
 
-| Block file | Type | What it does |
+| Block file | Type | Responsibility |
 |---|---|---|
-| `_image_source_impl.py` | source | Loads image (PIL, grayscale), prepends sync code (16 B alternating `0xFF`/`0x00`) + pilot (1024 B `0x00`), outputs `np.uint8` bytes |
-| `_image_sink_impl.py` | sink | Accumulates bytes, reconstructs grayscale image, saves PNG + optional Qt preview. `skip_each_frame=N` discards N bytes after each frame save (e.g. 1040 for preamble). |
-| `_pilot_sync_impl.py` | sync | Detects sync code via alternating phase diff (`π/3`), averages pilot phase → `φ_est`, subtracts from subsequent phase samples |
+| `_image_source_impl.py` | source | Loads an image with Pillow, converts it to grayscale, prepends a 416-sample Barker-13 sync word and a 1024-sample zero pilot, then emits `np.uint8` samples. Repeat mode must preserve `self.pos` across GNU Radio `work()` calls. |
+| `_pilot_sync_impl.py` | variable-rate block | Searches the received phase stream for the Barker sync word using vectorized normalized correlation after removing constant phase and linear trend. It consumes sync/pilot samples without output, estimates pilot phase, and outputs exactly `frame_size` corrected image-phase samples. |
+| `_image_sink_impl.py` | sink | Accumulates `width * height` bytes, saves a grayscale PNG, and optionally updates a Qt preview. The primary flow uses `skip_each_frame=0` because the synchronizer removes the preamble. |
 
-Thin wrappers (`pm_tx_epy_block_0.py`, `pm_tx_image_byte_source_0.py`, `pm_tx_pilot_sync_0.py`) re-export these for GRC embedding.
+The generated wrapper modules named `pm_loop_usrp_*` and `pm_tx_*` re-export
+these implementations for GRC embedded Python blocks.
 
-## Run
+## Current framing and synchronization
 
-```bash
-python3 pm_tx.py       # PM image tx/rx (Qt GUI)
+- Sync word: Barker-13 chips
+  `[+ + + + + - - + + - + - +]`.
+- Samples per chip: 32.
+- Total sync length: 416 samples.
+- Pilot length: 1024 zero-valued image samples.
+- Image phase range: `0` to `pi/3`.
+- Receiver sync thresholds in `_pilot_sync_impl.py`:
+  correlation `> 0.94`, amplitude `> 0.4`, residual noise `< 0.35`.
+- Synchronization does not use stream tags. This is intentional so separate
+  transmitter and receiver processes work over the RF link.
+- Before converting corrected values to `uint8`, the primary flow rails the
+  normalized signal to `[0, 1]` to prevent values above 255 from wrapping to
+  black.
+
+At the current sample rate of 500 kS/s, a 1920x1080 frame plus preamble lasts
+about 4.15 seconds. A receiver started in the middle of a frame may wait up to
+one complete frame period for the next sync word, then another frame period to
+save a complete image.
+
+## Signal path
+
+```text
+JPEG/PNG
+  -> grayscale uint8
+  -> /255
+  -> * (pi/3)
+  -> complex PM
+  -> USRP TX/RX
+  -> complex phase
+  -> Barker sync + pilot phase correction
+  -> * (3/pi)
+  -> rail [0,1]
+  -> *255 and uint8
+  -> received.png
 ```
+
+`phase_tx.dat` and `phase_rx.dat` are optional float32 phase captures used for
+offline diagnosis. They can be large and may be truncated when a new run opens
+the file sinks.
 
 ## Dependencies
 
-- `gnuradio` 3.10.12.0 (system install: `/usr/bin/gnuradio-companion`)
-- `python3`, `numpy`, `Pillow`, `PyQt5`
+- GNU Radio 3.10.12.0
+- UHD and compatible USRP hardware
+- Python 3
+- NumPy
+- Pillow
+- PyQt5
 
-## Key conventions
+## Validation
 
-- Image pipeline: JPEG → grayscale bytes → float [0,1] → multiply by `max_phase` (π/3) → PM → demod → `* 3/π` → uchar → PNG
-- Hardcoded absolute paths in `.grc`/`.py` — update `image_path`/`output_path` when moving files.
-- `image_byte_sink` `display=True` opens a live preview window.
-- No package manager, no tests, no CI, not a git repo.
+There is no automated test suite or CI. Before committing DSP changes:
+
+```bash
+python3 -m py_compile \
+  _image_source_impl.py \
+  _pilot_sync_impl.py \
+  _image_sink_impl.py \
+  pm_loop_usrp.py
+
+PYTHONPATH="$PWD" grcc -o /tmp pm_loop_usrp.grc
+```
+
+For image quality, compare the configured source image with `received.png`
+after converting both to grayscale. The last verified
+`scene1920x1080.jpg`/`received.png` result was approximately 38.736 dB PSNR.
+
+## Repository conventions
+
+- Absolute image/output paths currently exist in the GRC and generated Python
+  files. Update both or regenerate Python after changing the GRC.
+- Keep `.grc` and generated `.py` changes consistent in the same commit.
+- Do not reintroduce `frame_start` stream tags for RF synchronization.
+- Do not add a software throttle in a hardware-timed USRP path.
+- The worktree may contain local images, phase captures, and unrelated
+  diagnostics. Stage only files belonging to the requested change.
