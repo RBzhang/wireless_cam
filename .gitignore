@@ -1,14 +1,6 @@
 __pycache__/
 *.pyc
 *.bak
-phase_rx.dat
-phase_tx.dat
-one_cycle*.dat
-diff.log
-received*.png
-image.png
-colorbar*.png
-scene*.jpg
-1920x1080.jpg
-800x5.jpg
-*.jpg
+*.dat
+*.log
+received*
