@@ -13,8 +13,9 @@ from gnuradio import qtgui
 from PyQt5 import QtCore
 from gnuradio import analog
 from gnuradio import blocks
-from gnuradio import gr
+from gnuradio import filter
 from gnuradio.filter import firdes
+from gnuradio import gr
 from gnuradio.fft import window
 import sys
 import signal
@@ -72,7 +73,8 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate = 0.5e6
         self.noise = noise = 0.01
         self.max_phase = max_phase = math.pi/3
-        self.gain = gain = 10
+        self.if_freq = if_freq = 100e3
+        self.gain = gain = 1
         self.frame_width = frame_width = 1920
         self.frame_height = frame_height = 1080
 
@@ -80,7 +82,7 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self._gain_range = qtgui.Range(0, 30, 1, 10, 200)
+        self._gain_range = qtgui.Range(0, 30, 1, 1, 200)
         self._gain_win = qtgui.RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)
         self.uhd_usrp_source_0 = uhd.usrp_source(
@@ -316,20 +318,32 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         self._noise_range = qtgui.Range(0, 1, 0.01, 0.01, 200)
         self._noise_win = qtgui.RangeWidget(self._noise_range, self.set_noise, "'noise'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._noise_win)
-        self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/scene1920x1080.jpg", repeat=True)
-        self.epy_block_0 = epy_block_0.image_byte_sink(width=frame_width, height=frame_height, output_path="/home/ray/Project/wireless-cam/received.png", save_sequence=False, display=True, skip_each_frame=0)
+        self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="1920x1080.jpg", repeat=True)
+        self.epy_block_0 = epy_block_0.image_byte_sink(width=frame_width, height=frame_height, output_path="received.png", save_sequence=False, display=True, skip_each_frame=0)
         self.blocks_uchar_to_float_0 = blocks.uchar_to_float()
+        self.blocks_rotator_cc_tx = blocks.rotator_cc((2*math.pi*if_freq/samp_rate), False)
+        self.blocks_rotator_cc_rx = blocks.rotator_cc((-2*math.pi*if_freq/samp_rate), False)
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_multiply_const_vxx_scale = blocks.multiply_const_ff((1.0/255.0))
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_ff((3/math.pi))
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(max_phase)
         self.blocks_magphase_to_complex_0 = blocks.magphase_to_complex(1)
         self.blocks_float_to_uchar_0 = blocks.float_to_uchar(1, 255, 0)
-        self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_tx.dat', False)
+        self.blocks_file_sink_0_0 = blocks.file_sink(gr.sizeof_float*1, 'phase_tx.dat', False)
         self.blocks_file_sink_0_0.set_unbuffered(False)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, '/home/ray/Project/wireless-cam/phase_rx.dat', False)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*1, 'phase_rx.dat', False)
         self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_complex_to_magphase_0 = blocks.complex_to_magphase(1)
+        self.band_reject_filter_0 = filter.fir_filter_ccf(
+            1,
+            firdes.band_reject(
+                1,
+                samp_rate,
+                90e3,
+                110e3,
+                5e3,
+                window.WIN_HAMMING,
+                6.76))
         self.analog_rail_ff_0 = analog.rail_ff(0, 1)
         self.analog_const_source_x_0 = analog.sig_source_f(0, analog.GR_CONST_WAVE, 0, 0, 1)
 
@@ -339,22 +353,25 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
         ##################################################
         self.connect((self.analog_const_source_x_0, 0), (self.blocks_magphase_to_complex_0, 0))
         self.connect((self.analog_rail_ff_0, 0), (self.blocks_float_to_uchar_0, 0))
+        self.connect((self.band_reject_filter_0, 0), (self.blocks_complex_to_magphase_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 1), (self.blocks_file_sink_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 0), (self.blocks_null_sink_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 1), (self.pilot_sync_0, 0))
         self.connect((self.blocks_complex_to_magphase_0, 1), (self.qtgui_time_sink_x_1, 0))
         self.connect((self.blocks_float_to_uchar_0, 0), (self.epy_block_0, 0))
+        self.connect((self.blocks_magphase_to_complex_0, 0), (self.blocks_rotator_cc_tx, 0))
         self.connect((self.blocks_magphase_to_complex_0, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.blocks_magphase_to_complex_0, 0), (self.uhd_usrp_sink_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_file_sink_0_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_magphase_to_complex_0, 1))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.qtgui_time_sink_x_1_0, 0))
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.analog_rail_ff_0, 0))
         self.connect((self.blocks_multiply_const_vxx_scale, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.blocks_rotator_cc_rx, 0), (self.band_reject_filter_0, 0))
+        self.connect((self.blocks_rotator_cc_tx, 0), (self.uhd_usrp_sink_0, 0))
         self.connect((self.blocks_uchar_to_float_0, 0), (self.blocks_multiply_const_vxx_scale, 0))
         self.connect((self.image_byte_source_0, 0), (self.blocks_uchar_to_float_0, 0))
         self.connect((self.pilot_sync_0, 0), (self.blocks_multiply_const_vxx_1, 0))
-        self.connect((self.uhd_usrp_source_0, 0), (self.blocks_complex_to_magphase_0, 0))
+        self.connect((self.uhd_usrp_source_0, 0), (self.blocks_rotator_cc_rx, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.qtgui_time_sink_x_1_1, 0))
 
 
@@ -371,6 +388,9 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.band_reject_filter_0.set_taps(firdes.band_reject(1, self.samp_rate, 90e3, 110e3, 5e3, window.WIN_HAMMING, 6.76))
+        self.blocks_rotator_cc_rx.set_phase_inc((-2*math.pi*self.if_freq/self.samp_rate))
+        self.blocks_rotator_cc_tx.set_phase_inc((2*math.pi*self.if_freq/self.samp_rate))
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_1_0.set_samp_rate(self.samp_rate)
@@ -392,6 +412,14 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
     def set_max_phase(self, max_phase):
         self.max_phase = max_phase
         self.blocks_multiply_const_vxx_0.set_k(self.max_phase)
+
+    def get_if_freq(self):
+        return self.if_freq
+
+    def set_if_freq(self, if_freq):
+        self.if_freq = if_freq
+        self.blocks_rotator_cc_rx.set_phase_inc((-2*math.pi*self.if_freq/self.samp_rate))
+        self.blocks_rotator_cc_tx.set_phase_inc((2*math.pi*self.if_freq/self.samp_rate))
 
     def get_gain(self):
         return self.gain

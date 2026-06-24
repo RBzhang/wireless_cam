@@ -134,7 +134,8 @@ class pilot_sync(gr.basic_block):
                 self.pilot_samples.append(sample)
                 consumed += 1
                 if len(self.pilot_samples) >= self.pilot_len:
-                    self.phi_est = np.mean(self.pilot_samples)
+                    pilot = np.asarray(self.pilot_samples, dtype=np.float64)
+                    self.phi_est = np.angle(np.mean(np.exp(1j * pilot)))
                     print(f"[Pilot Sync] Pilot done. "
                           f"\u03c6_est = {self.phi_est:.4f} rad",
                               flush=True)
@@ -145,7 +146,9 @@ class pilot_sync(gr.basic_block):
                 if produced >= len(out0):
                     break
                 sample = float(in0[consumed])
-                out0[produced] = sample - self.phi_est
+                phase_error = sample - self.phi_est
+                out0[produced] = np.arctan2(
+                    np.sin(phase_error), np.cos(phase_error))
                 produced += 1
                 consumed += 1
                 self._active_count += 1
