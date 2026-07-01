@@ -541,12 +541,11 @@ blocks:
     frame_size: frame_width*frame_height
     maxoutbuf: '0'
     minoutbuf: '0'
-    pilot_len: '1024'
     sync_len: '416'
   states:
-    _io_cache: ('Pilot Sync & Phase Correction', 'pilot_sync', [('sync_len', '416'),
-      ('pilot_len', '1024'), ('frame_size', '4000')], [('0', 'float', 1)], [('0',
-      'float', 1)], '', ['frame_size', 'pilot_len', 'sync_len'])
+    _io_cache: ('Barker Sync & Phase Correction', 'pilot_sync', [('sync_len', '416'),
+      ('frame_size', '4000')], [('0', 'float', 1)], [('0', 'float', 1)], '',
+      ['frame_size', 'sync_len'])
     bus_sink: false
     bus_source: false
     bus_structure: null

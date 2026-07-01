@@ -15,14 +15,6 @@ from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import filter
 from gnuradio.filter import firdes
-from gnuradio import gr
-from gnuradio.fft import window
-import sys
-import signal
-from PyQt5 import Qt
-from argparse import ArgumentParser
-from gnuradio.eng_arg import eng_float, intx
-from gnuradio import eng_notation
 from gnuradio import uhd
 import time
 import math
@@ -31,6 +23,15 @@ import pm_loop_usrp_image_byte_source_0 as image_byte_source_0  # embedded pytho
 import pm_loop_usrp_pilot_sync_0 as pilot_sync_0  # embedded python block
 import sip
 import threading
+from gnuradio import gr
+from gnuradio.filter import firdes
+from gnuradio.fft import window
+import sys
+import signal
+from argparse import ArgumentParser
+from gnuradio.eng_arg import eng_float, intx
+from gnuradio import eng_notation
+
 
 
 
@@ -314,7 +315,7 @@ class pm_loop_usrp(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
-        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=416, pilot_len=1024, frame_size=frame_width*frame_height)
+        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=416, frame_size=frame_width*frame_height)
         self._noise_range = qtgui.Range(0, 1, 0.01, 0.01, 200)
         self._noise_win = qtgui.RangeWidget(self._noise_range, self.set_noise, "'noise'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._noise_win)

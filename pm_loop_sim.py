@@ -13,18 +13,19 @@ from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import filter
 from gnuradio.filter import firdes
+import math
+import pm_loop_sim_image_byte_sink_0 as image_byte_sink_0  # embedded python block
+import pm_loop_sim_image_byte_source_0 as image_byte_source_0  # embedded python block
+import pm_loop_sim_pilot_sync_0 as pilot_sync_0  # embedded python block
+import threading
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import sys
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-import math
-import pm_loop_sim_image_byte_sink_0 as image_byte_sink_0  # embedded python block
-import pm_loop_sim_image_byte_source_0 as image_byte_source_0  # embedded python block
-import pm_loop_sim_pilot_sync_0 as pilot_sync_0  # embedded python block
-import threading
 
 
 
@@ -33,7 +34,6 @@ class pm_loop_sim(gr.top_block):
 
     def __init__(self):
         gr.top_block.__init__(self, "PM Loop Software Simulation", catch_exceptions=True)
-        self.flowgraph_started = threading.Event()
 
         ##################################################
         # Variables
@@ -52,7 +52,7 @@ class pm_loop_sim(gr.top_block):
         # Blocks
         ##################################################
 
-        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=416, pilot_len=1024, frame_size=frame_width*frame_height)
+        self.pilot_sync_0 = pilot_sync_0.pilot_sync(sync_len=416, frame_size=frame_width*frame_height)
         self.image_byte_source_0 = image_byte_source_0.image_byte_source(image_path="/home/ray/Project/wireless-cam/scene1920x1080.jpg", repeat=False)
         self.image_byte_sink_0 = image_byte_sink_0.image_byte_sink(width=frame_width, height=frame_height, output_path="/home/ray/Project/wireless-cam/received_sim.png", save_sequence=False, display=False, skip_each_frame=0)
         self.fir_filter_channel = filter.fir_filter_ccc(1, channel_taps)
@@ -189,7 +189,6 @@ def main(top_block_cls=pm_loop_sim, options=None):
     signal.signal(signal.SIGTERM, sig_handler)
 
     tb.start()
-    tb.flowgraph_started.set()
 
     tb.wait()
 
