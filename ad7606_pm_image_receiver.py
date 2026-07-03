@@ -2,10 +2,12 @@
 """
 AD7606 UDP PM-image receiver for direct DAC capture validation.
 
-This script is intended for the wireless_cam receiver repository. It reuses the
+This script belongs to the wireless_cam receiver repository. It reuses the
 AD7606_2 UDP bank protocol, extracts one ADC channel (default: CH1), detects the
-Barker-13 preamble in the sampled DAC voltage, and reconstructs grayscale image
-frames without using a USRP.
+Barker-13 preamble in the sampled DAC voltage, reconstructs grayscale image
+frames, displays them in real time, and saves decoded frames as BMP images.
+
+It does not save raw UDP payloads or raw ADC sample files.
 
 Typical use:
     python3 ad7606_pm_image_receiver.py \
@@ -15,8 +17,7 @@ Typical use:
         --frame-height 180 \
         --adc-sample-rate 1000000 \
         --dac-sample-rate 100000 \
-        --channel 1 \
-        --max-frames 10
+        --channel 1
 
 UDP protocol inherited from AD7606_2/pc_receiver/ad7606_receiver.py:
     bytes 0..3   : bank_id   (uint32 LE)
@@ -28,7 +29,6 @@ UDP protocol inherited from AD7606_2/pc_receiver/ad7606_receiver.py:
 from __future__ import annotations
 
 import argparse
-import shutil
 import socket
 import struct
 import sys
@@ -56,6 +56,60 @@ BARKER_13 = np.array(
     [1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1],
     dtype=np.float64,
 )
+
+
+class LiveImageDisplay:
+    """Small Tkinter window for video-like display of decoded grayscale frames."""
+
+    def __init__(self, width: int, height: int, scale: int = 3, title: str = "AD7606 decoded image"):
+        try:
+            import tkinter as tk
+            from PIL import ImageTk
+        except Exception as exc:  # pragma: no cover - depends on local GUI support
+            raise RuntimeError(f"Tkinter/Pillow ImageTk display is unavailable: {exc}") from exc
+
+        self._tk = tk
+        self._image_tk = ImageTk
+        self.width = int(width)
+        self.height = int(height)
+        self.scale = max(1, int(scale))
+        self.closed = False
+        self._photo = None
+
+        self.root = tk.Tk()
+        self.root.title(title)
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
+        self.label = tk.Label(self.root, bg="black")
+        self.label.pack()
+        self.status = tk.Label(self.root, text="Waiting for decoded frames...", anchor="w")
+        self.status.pack(fill="x")
+        self.root.update_idletasks()
+        self.root.update()
+
+    def update(self, image_u8: np.ndarray, frame_index: int, fps_est: float) -> None:
+        if self.closed:
+            return
+
+        img = Image.fromarray(image_u8, mode="L")
+        if self.scale != 1:
+            img = img.resize((self.width * self.scale, self.height * self.scale), Image.Resampling.NEAREST)
+
+        self._photo = self._image_tk.PhotoImage(img)
+        self.label.configure(image=self._photo)
+        if fps_est > 0:
+            self.status.configure(text=f"Frame {frame_index} | display FPS {fps_est:.2f}")
+        else:
+            self.status.configure(text=f"Frame {frame_index}")
+        self.root.update_idletasks()
+        self.root.update()
+
+    def close(self) -> None:
+        if not self.closed:
+            self.closed = True
+            try:
+                self.root.destroy()
+            except Exception:
+                pass
 
 
 class PmVoltageFrameDecoder:
@@ -319,19 +373,16 @@ class Ad7606UdpBankReceiver:
             return bank_id, samples, addr
 
 
-def save_frame(image: np.ndarray, output_dir: Path, frame_index: int, save_latest: bool) -> Path:
+def save_bmp_frame(image: np.ndarray, output_dir: Path, frame_index: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    path = output_dir / f"frame_{frame_index:04d}.png"
-    Image.fromarray(image, mode="L").save(path)
-    if save_latest:
-        latest = output_dir / "latest.png"
-        shutil.copyfile(path, latest)
+    path = output_dir / f"frame_{frame_index:04d}.bmp"
+    Image.fromarray(image, mode="L").save(path, format="BMP")
     return path
 
 
 def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Decode PM grayscale images from AD7606 UDP samples captured on CH1."
+        description="Decode and display PM grayscale images from AD7606 UDP samples captured on CH1."
     )
     parser.add_argument("--port", type=int, default=5001, help="UDP port to listen on")
     parser.add_argument(
@@ -340,7 +391,12 @@ def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
         default=DEFAULT_TARGET_IP,
         help="Only accept packets from this sender IP; use empty string to accept all",
     )
-    parser.add_argument("--output-dir", type=str, default="ad7606_pm_frames")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="ad7606_decoded_bmp",
+        help="Dedicated folder for decoded BMP frames",
+    )
     parser.add_argument("--frame-width", type=int, default=320)
     parser.add_argument("--frame-height", type=int, default=180)
     parser.add_argument(
@@ -385,7 +441,8 @@ def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
     parser.add_argument("--duration", type=float, default=0.0, help="Stop after N seconds; 0=disabled")
     parser.add_argument("--max-banks", type=int, default=0, help="Stop after N complete banks; 0=disabled")
     parser.add_argument("--max-frames", type=int, default=0, help="Stop after N decoded frames; 0=unlimited")
-    parser.add_argument("--no-latest", action="store_true", help="Do not update latest.png")
+    parser.add_argument("--no-display", action="store_true", help="Disable real-time decoded image display")
+    parser.add_argument("--display-scale", type=int, default=3, help="Nearest-neighbor display scaling factor")
     return parser.parse_args(list(argv) if argv is not None else None)
 
 
@@ -409,6 +466,14 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         min_sync_span=args.min_sync_span,
     )
 
+    display: Optional[LiveImageDisplay] = None
+    if not args.no_display:
+        try:
+            display = LiveImageDisplay(args.frame_width, args.frame_height, scale=args.display_scale)
+        except RuntimeError as exc:
+            print(f"[WARN] real-time display disabled: {exc}")
+            display = None
+
     target = args.target_ip.strip()
     receiver = Ad7606UdpBankReceiver(args.port, target_ip=target)
 
@@ -422,15 +487,20 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     print(f"  Samples per symbol  : {samples_per_symbol}")
     print(f"  Sync length         : {decoder.sync_len} ADC samples")
     print(f"  Payload length      : {decoder.frame_sample_count} ADC samples/frame")
-    print(f"  Output directory    : {output_dir}")
+    print(f"  BMP output directory: {output_dir}")
+    print(f"  Real-time display   : {'enabled' if display is not None else 'disabled'}")
     print("\nConnect DAC output to AD7606 CH1 and start the Zynq UDP streamer.\n")
 
     banks_received = 0
     frames_received = 0
     t_start = time.monotonic()
+    last_display_time = 0.0
 
     try:
         while True:
+            if display is not None and display.closed:
+                print("[STOP] display window closed")
+                break
             if args.duration > 0 and (time.monotonic() - t_start) >= args.duration:
                 print(f"[STOP] duration reached: {args.duration:.1f}s")
                 break
@@ -458,7 +528,14 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
                 )
 
             for image, info in decoded:
-                path = save_frame(image, output_dir, frames_received, save_latest=not args.no_latest)
+                path = save_bmp_frame(image, output_dir, frames_received)
+                now = time.monotonic()
+                fps_est = 0.0 if last_display_time == 0.0 else 1.0 / max(now - last_display_time, 1e-9)
+                last_display_time = now
+
+                if display is not None:
+                    display.update(image, frames_received, fps_est)
+
                 frames_received += 1
                 print(
                     f"[FRAME] {info['frame_index']} saved {path} | "
@@ -475,11 +552,14 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         print("\n[STOP] interrupted by user")
     finally:
         receiver.close()
+        if display is not None:
+            display.close()
 
     print("\nDone.")
     print(f"  Banks received : {banks_received}")
     print(f"  Frames decoded : {frames_received}")
     print(f"  UDP bytes      : {receiver.total_bytes_received}")
+    print("  Raw ADC/UDP samples were not saved by this script.")
     return 0
 
 
