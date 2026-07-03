@@ -8,26 +8,58 @@ BARKER_13 = np.array(
 
 
 class pilot_sync(gr.basic_block):
-    def __init__(self, sync_len=416, frame_size=4000):
+    def __init__(self, sync_len=416, frame_size=4000, image_oversample=1,
+                 corr_thresh=0.94, amp_thresh=0.4, noise_thresh=0.35,
+                 auto_phase_scale=False):
         gr.basic_block.__init__(
             self,
             name='Barker Sync & Phase Correction',
             in_sig=[np.float32],
             out_sig=[np.float32]
         )
-        self.sync_len = sync_len
         self.frame_size = frame_size
+        self.image_oversample = max(1, int(round(image_oversample)))
+        self.corr_thresh = corr_thresh
+        self.amp_thresh = amp_thresh
+        self.noise_thresh = noise_thresh
+        self.auto_phase_scale = auto_phase_scale
         self.expected_amp = np.pi / 3
-        if self.sync_len % len(BARKER_13) != 0:
+        self._configure_sync(sync_len)
+
+        self.state = 'SEARCHING'
+        self.buf = []
+        self.phi_est = 0.0
+        self.phase_gain = 1.0
+        self._avg_buf = []
+        self._active_count = 0
+        if (
+            self.sync_len != 416
+            or self.image_oversample != 1
+            or self.corr_thresh != 0.94
+            or self.auto_phase_scale
+        ):
+            print(f"[Barker Sync] configured "
+                  f"sync_len={self.sync_len} "
+                  f"frame_size={self.frame_size} "
+                  f"image_oversample={self.image_oversample} "
+                  f"corr_thresh={self.corr_thresh:.3f} "
+                  f"amp_thresh={self.amp_thresh:.3f} "
+                  f"noise_thresh={self.noise_thresh:.3f} "
+                  f"auto_phase_scale={self.auto_phase_scale}",
+                  flush=True)
+
+    def _configure_sync(self, sync_len):
+        self._sync_len = int(round(sync_len))
+        if self._sync_len % len(BARKER_13) != 0:
             raise ValueError("sync_len must be a multiple of 13")
 
-        chip_samples = self.sync_len // len(BARKER_13)
+        chip_samples = self._sync_len // len(BARKER_13)
         self._sync_chips = np.repeat(BARKER_13, chip_samples)
         template = self._sync_chips
         self._zero_phase_mask = self._sync_chips < 0
         self._trend_index = (
-            np.arange(self.sync_len, dtype=np.float64)
-            - (self.sync_len - 1) / 2
+            np.arange(self._sync_len, dtype=np.float64)
+            - (self._sync_len - 1) / 2
         )
         self._trend_energy = np.dot(self._trend_index, self._trend_index)
         self._sync_template = template - np.mean(template)
@@ -40,10 +72,25 @@ class pilot_sync(gr.basic_block):
             self._sync_template, self._sync_template)
         self._sync_template_norm = np.sqrt(self._sync_template_energy)
 
-        self.state = 'SEARCHING'
-        self.buf = []
-        self.phi_est = 0.0
-        self._active_count = 0
+    @property
+    def sync_len(self):
+        return self._sync_len
+
+    @sync_len.setter
+    def sync_len(self, sync_len):
+        self._configure_sync(sync_len)
+        if hasattr(self, 'state'):
+            self.state = 'SEARCHING'
+            self.buf = []
+            self._avg_buf = []
+            self._active_count = 0
+
+    def set_sync_len(self, sync_len):
+        self.sync_len = sync_len
+
+    def set_image_oversample(self, image_oversample):
+        self.image_oversample = max(1, int(round(image_oversample)))
+        self._avg_buf = []
 
     def _estimate_zero_phase(self, sync_window):
         zero_phase_samples = np.asarray(
@@ -87,9 +134,9 @@ class pilot_sync(gr.basic_block):
             np.maximum(residual_energy, 0.0) / self.sync_len)
 
         matches = np.flatnonzero(
-            (correlation > 0.94)
-            & (amplitude > 0.4)
-            & (noise < 0.35)
+            (correlation > self.corr_thresh)
+            & (amplitude > self.amp_thresh)
+            & (noise < self.noise_thresh)
         )
         if len(matches) == 0:
             return None
@@ -130,31 +177,44 @@ class pilot_sync(gr.basic_block):
 
                 end, stats, self.phi_est = match
                 consumed += max(0, end + 1 - buffered)
+                self.phase_gain = 1.0
+                if self.auto_phase_scale:
+                    phase_span = max(2.0 * stats[1], 1e-6)
+                    self.phase_gain = self.expected_amp / phase_span
                 print(f"[Barker Sync] Sync detected! "
                       f"corr={stats[0]:.3f} "
                       f"amp={stats[1]:.3f} "
                       f"noise={stats[2]:.3f} "
-                      f"zero_phase={self.phi_est:.4f} rad",
+                      f"zero_phase={self.phi_est:.4f} rad "
+                      f"phase_gain={self.phase_gain:.3f}",
                       flush=True)
                 self.state = 'ACTIVE'
                 self.buf = []
+                self._avg_buf = []
 
             else:
                 if produced >= len(out0):
                     break
                 sample = float(in0[consumed])
                 phase_error = sample - self.phi_est
-                out0[produced] = np.arctan2(
+                corrected = np.arctan2(
                     np.sin(phase_error), np.cos(phase_error))
-                produced += 1
+                self._avg_buf.append(corrected)
                 consumed += 1
-                self._active_count += 1
-                if self.frame_size > 0 and self._active_count >= self.frame_size:
-                    print(f"[Barker Sync] Frame done, "
-                          f"re-searching...", flush=True)
-                    self.state = 'SEARCHING'
-                    self.buf = []
-                    self._active_count = 0
+                if len(self._avg_buf) >= self.image_oversample:
+                    avg_phase = np.angle(np.mean(np.exp(
+                        1j * np.asarray(self._avg_buf, dtype=np.float64))))
+                    out0[produced] = avg_phase * self.phase_gain
+                    produced += 1
+                    self._avg_buf = []
+                    self._active_count += 1
+                    if self.frame_size > 0 and self._active_count >= self.frame_size:
+                        print(f"[Barker Sync] Frame done, "
+                              f"re-searching...", flush=True)
+                        self.state = 'SEARCHING'
+                        self.buf = []
+                        self._avg_buf = []
+                        self._active_count = 0
 
         self.consume(0, consumed)
         return produced
