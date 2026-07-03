@@ -24,8 +24,8 @@ python3 pm_loop_usrp.py
 
 | Block file | Type | Responsibility |
 |---|---|---|
-| `_image_source_impl.py` | source | Loads an image with Pillow, converts it to grayscale, prepends a 416-sample Barker-13 sync word and a 1024-sample zero pilot, then emits `np.uint8` samples. Repeat mode must preserve `self.pos` across GNU Radio `work()` calls. |
-| `_pilot_sync_impl.py` | variable-rate block | Searches the received phase stream for the Barker sync word using vectorized normalized correlation after removing constant phase and linear trend. It consumes sync/pilot samples without output, estimates pilot phase, and outputs exactly `frame_size` corrected image-phase samples. |
+| `_image_source_impl.py` | source | Loads an image with Pillow, converts it to grayscale, prepends a 416-sample Barker-13 sync word, then emits `np.uint8` samples. Repeat mode must preserve `self.pos` across GNU Radio `work()` calls. |
+| `_pilot_sync_impl.py` | variable-rate block | Searches the received phase stream for the Barker sync word using vectorized normalized correlation after removing constant phase and linear trend. It uses the Barker zero-code samples as the zero-phase estimate and outputs exactly `frame_size` corrected image-phase samples. |
 | `_image_sink_impl.py` | sink | Accumulates `width * height` bytes, saves a grayscale PNG, and optionally updates a Qt preview. The primary flow uses `skip_each_frame=0` because the synchronizer removes the preamble. |
 
 The generated wrapper modules named `pm_loop_usrp_*` and `pm_tx_*` re-export
@@ -37,7 +37,6 @@ these implementations for GRC embedded Python blocks.
   `[+ + + + + - - + + - + - +]`.
 - Samples per chip: 32.
 - Total sync length: 416 samples.
-- Pilot length: 1024 zero-valued image samples.
 - Image phase range: `0` to `pi/3`.
 - Receiver sync thresholds in `_pilot_sync_impl.py`:
   correlation `> 0.94`, amplitude `> 0.4`, residual noise `< 0.35`.
@@ -62,7 +61,7 @@ JPEG/PNG
   -> complex PM
   -> USRP TX/RX
   -> complex phase
-  -> Barker sync + pilot phase correction
+  -> Barker sync + zero-code phase correction
   -> * (3/pi)
   -> rail [0,1]
   -> *255 and uint8

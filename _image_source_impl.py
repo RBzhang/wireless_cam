@@ -10,7 +10,6 @@ SYNC_CHIP_SAMPLES = 32
 SYNC_CODE = np.where(
     np.repeat(BARKER_13, SYNC_CHIP_SAMPLES) > 0, 0xFF, 0x00
 ).astype(np.uint8)
-PILOT_LEN = 1024
 
 
 class image_byte_source(gr.sync_block):
@@ -34,8 +33,7 @@ class image_byte_source(gr.sync_block):
         img = Image.open(image_path).convert('L')
         self.width, self.height = img.size
         image_data = np.frombuffer(img.tobytes(), dtype=np.uint8)
-        pilot = np.zeros(PILOT_LEN, dtype=np.uint8)
-        self.data = np.concatenate([SYNC_CODE, pilot, image_data])
+        self.data = np.concatenate([SYNC_CODE, image_data])
         self.pos = 0
         total = len(self.data)
         print(f"[Image Byte Source] loaded: {image_path}, "
